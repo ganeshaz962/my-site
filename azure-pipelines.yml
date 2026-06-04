@@ -3,6 +3,9 @@ trigger:
     include:
       - main
 
+variables:
+  - group: mysite-vg   # Variable group name you created in Library
+
 pool:
   vmImage: ubuntu-latest
 
