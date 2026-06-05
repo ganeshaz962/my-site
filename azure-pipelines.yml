@@ -21,3 +21,5 @@ steps:
       skip_app_build: true      # No build step needed for plain HTML/CSS/JS
     env:
       azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
+
+#edit
