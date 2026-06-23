@@ -13,6 +13,52 @@ steps:
   - checkout: self
     submodules: true
 
+  # Code scanning stage: installs Node, runs linters (ESLint, stylelint) and npm audit (if lockfile present)
+  - task: NodeTool@0
+    displayName: 'Install Node.js'
+    inputs:
+      versionSpec: '18.x'
+
+  - script: |
+      set -e
+
+      echo "Checking for package.json..."
+      if [ -f package.json ]; then
+        echo "package.json found — installing dependencies"
+        npm ci
+      else
+        echo "No package.json found — initializing temporary npm project and installing linters"
+        npm init -y
+        npm install eslint stylelint --no-save
+      fi
+
+      # Run ESLint if JavaScript files exist
+      if find . -type f -name "*.js" -print -quit | grep -q .; then
+        echo "Running ESLint..."
+        npx eslint . --ext .js
+      else
+        echo "No JavaScript files found — skipping ESLint"
+      fi
+
+      # Run stylelint if CSS files exist
+      if find . -type f -name "*.css" -print -quit | grep -q .; then
+        echo "Running stylelint..."
+        npx stylelint "**/*.css"
+      else
+        echo "No CSS files found — skipping stylelint"
+      fi
+
+      # Run npm audit if lockfile present
+      if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+        echo "Running npm audit (fail on high severity)..."
+        npm audit --audit-level=high
+      else
+        echo "No lockfile found — skipping npm audit"
+      fi
+    displayName: 'Code scanning: linters & security scan'
+    env:
+      CI: true
+
   - task: AzureStaticWebApp@0
     displayName: Deploy to Azure Static Web Apps
     inputs:
@@ -22,4 +68,4 @@ steps:
     env:
       azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN)
 
-#edit
+# edit
